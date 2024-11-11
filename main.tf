@@ -1,10 +1,10 @@
 resource "google_cloud_run_v2_job" "run_job" {
-  name                  = var.name
+  name = var.name
   # These two parameters are in beta state. The will be added in a future update. 
   #start_execution_token = var.start_execution_token
   #run_execution_token   = var.start_execution_token
-  project               = var.project
-  deletion_protection   = var.deletion_protection
+  project             = var.project
+  deletion_protection = var.deletion_protection
   template {
     labels      = lookup(var.template, "labels", null)
     annotations = lookup(var.template, "annotations", null)
@@ -153,17 +153,17 @@ resource "google_cloud_run_v2_job" "run_job" {
 }
 
 resource "google_project_iam_binding" "CustomCloudRunDeveloper" {
-  depends_on = [ google_cloud_run_v2_job.run_job ]
-  count   = length(var.members) == 0 ? 0 : 1
-  project = var.project
-  role    = "organizations/225850268505/roles/CustomCloudRunDeveloper"
-  members = var.members
+  depends_on = [google_cloud_run_v2_job.run_job]
+  count      = length(var.members) == 0 ? 0 : 1
+  project    = var.project
+  role       = "organizations/225850268505/roles/CustomCloudRunDeveloper"
+  members    = var.members
 }
 
 resource "google_project_iam_binding" "CloudSchedulerAdmin" {
-  depends_on = [ google_cloud_run_v2_job.run_job ]
-  count   = var.scheduler_jobs_admin == true ? 1 : 0
-  project = var.project
-  role    = "roles/cloudscheduler.admin"
-  members = var.members
+  depends_on = [google_cloud_run_v2_job.run_job]
+  count      = var.scheduler_jobs_admin == true ? 1 : 0
+  project    = var.project
+  role       = "roles/cloudscheduler.admin"
+  members    = var.members
 }

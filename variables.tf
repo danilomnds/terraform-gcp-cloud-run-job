@@ -148,6 +148,6 @@ variable "members" {
 }
 
 variable "scheduler_jobs_admin" {
-  type = bool
+  type    = bool
   default = false
 }

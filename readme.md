@@ -1,7 +1,7 @@
 # Module - Cloud Run Job V2
 [![COE](https://img.shields.io/badge/Created%20By-CCoE-blue)]()
 [![HCL](https://img.shields.io/badge/language-HCL-blueviolet)](https://www.terraform.io/)
-[![OCI](https://img.shields.io/badge/provider-OCI-red)](https://registry.terraform.io/providers/oracle/oci/latest)
+[![GCP](https://img.shields.io/badge/provider-GCP-green)](https://registry.terraform.io/providers/hashicorp/google/latest)
 
 Module developed to standardize the creation of Cloud Run Jobs.
 
@@ -19,7 +19,7 @@ Note: The `?ref=***` refers a tag on the git module repo.
 ## Default use case
 ```hcl
 module "cloudrunjobA" {    
-  source = "git::https://github.com/danilomnds/terraform-gcp-module-cloud-run-job?ref=v1.0.0"
+  source = "git::https://github.com/danilomnds/terraform-gcp-cloud-run-job?ref=v1.0.0"
   project = "project_id"
   name = "cloudrunjobA"
   location = "<southamerica-east1>"
@@ -62,7 +62,7 @@ output "id" {
 ## Default use case plus RBAC
 ```hcl
 module "cloudrunjobA" {    
-  source = "git::https://github.com/danilomnds/terraform-gcp-module-cloud-run-job?ref=v1.0.0"
+  source = "git::https://github.com/danilomnds/terraform-gcp-cloud-run-job?ref=v1.0.0"
   project = "project_id"
   name = "cloudrunjobA"
   location = "<southamerica-east1>"
