@@ -85,15 +85,13 @@ resource "google_cloud_run_v2_job" "run_job" {
               instances = cloud_sql_instance.value.instances
             }
           }
-          # this block is in beta state
-          /*
           dynamic "empty_dir" {
             for_each = volumes.value.empty_dir != null ? [volumes.value.empty_dir] : []
             content {
               medium     = lookup(empty_dir.value, "medium", null)
               size_limit = lookup(empty_dir.value, "size_limit", null)
             }
-          }*/
+          }
           dynamic "gcs" {
             for_each = volumes.value.gcs != null ? [volumes.value.gcs] : []
             content {
@@ -152,18 +150,18 @@ resource "google_cloud_run_v2_job" "run_job" {
   }
 }
 
-resource "google_project_iam_binding" "CustomCloudRunDeveloper" {
-  depends_on = [google_cloud_run_v2_job.run_job]
-  count      = length(var.members) == 0 ? 0 : 1
+resource "google_project_iam_member" "CustomCloudRunDeveloper" {
+  depends_on = [ google_cloud_run_v2_job.run_job ]
+  for_each   = { for member in var.members : member => member }
   project    = var.project
   role       = "organizations/225850268505/roles/CustomCloudRunDeveloper"
-  members    = var.members
+  member     = each.value
 }
 
-resource "google_project_iam_binding" "CloudSchedulerAdmin" {
-  depends_on = [google_cloud_run_v2_job.run_job]
-  count      = var.scheduler_jobs_admin == true ? 1 : 0
+resource "google_project_iam_member" "CloudSchedulerAdmin" {
+  depends_on = [ google_cloud_run_v2_job.run_job ]
+  for_each   = { for member in var.members : member => member }
   project    = var.project
   role       = "roles/cloudscheduler.admin"
-  members    = var.members
+  member     = each.value
 }
