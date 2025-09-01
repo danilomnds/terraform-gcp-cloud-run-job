@@ -58,6 +58,43 @@ resource "google_cloud_run_v2_job" "run_job" {
             }
           }
           working_dir = lookup(containers.value, "working_dir", null)
+          depends_on = lookup(containers.value, "depends_on", null)
+          dynamic "startup_probe" {
+            for_each = containers.value.startup_probe != null ? [containers.value.startup_probe] : []
+            content {
+              initial_delay_seconds       = lookup(startup_probe.value, "initial_delay_seconds", null)
+              timeout_seconds       = lookup(startup_probe.value, "timeout_seconds", null)
+              period_seconds       = lookup(startup_probe.value, "period_seconds", null)
+              failure_threshold       = lookup(startup_probe.value, "failure_threshold", null)
+              dynamic "tcp_socket" {
+                for_each = startup_probe.value.tcp_socket != null ? [startup_probe.value.tcp_socket] : []
+                content {
+                   port =  lookup(tcp_socket.value, "port", null)
+                }                
+              }
+              dynamic "http_get" {
+                for_each = startup_probe.value.http_get != null ? [startup_probe.value.http_get] : []
+                content {
+                   path =  lookup(http_get.value, "path", null)
+                   port =  lookup(http_get.value, "port", null)
+                   dynamic "http_headers" {
+                    for_each = http_get.value.http_headers != null ? [http_get.value.http_headers] : []
+                    content {
+                      name = http_headers.value.name
+                      value =  lookup(http_headers.value, "value", null)
+                    }                     
+                   }
+                }                
+              }
+              dynamic "grpc" {
+                for_each = startup_probe.value.grpc != null ? [startup_probe.value.grpc] : []
+                content {
+                   port =  lookup(grpc.value, "port", null)
+                   service =  lookup(grpc.value, "service", null)
+                }                
+              }
+            }
+          }
         }
       }
       dynamic "volumes" {
@@ -89,7 +126,8 @@ resource "google_cloud_run_v2_job" "run_job" {
             for_each = volumes.value.empty_dir != null ? [volumes.value.empty_dir] : []
             content {
               medium     = lookup(empty_dir.value, "medium", null)
-              size_limit = lookup(empty_dir.value, "size_limit", null)
+              size_limit = lookup(empty_dir.value, "size_limit", null)              
+              #mount_options = lookup(empty_dir.value, "mount_options", null)
             }
           }
           dynamic "gcs" {
@@ -129,6 +167,13 @@ resource "google_cloud_run_v2_job" "run_job" {
         }
       }
       max_retries = lookup(var.template.template, "max_retries", null)
+      dynamic "node_selector" {
+        for_each = var.template.template.node_selector != null ? [var.template.template.node_selector] : []
+        content {
+          accelerator = node_selector.value.accelerator
+        }        
+      }
+      gpu_zonal_redundancy_disabled = lookup(var.template.template, "gpu_zonal_redundancy_disabled", null)      
     }
   }
   location       = var.location
@@ -146,20 +191,27 @@ resource "google_cloud_run_v2_job" "run_job" {
     }
   }
   lifecycle {
-    ignore_changes = []
+    ignore_changes = [
+      template[0].service_account,
+      template[0].containers[0].command,
+      template[0].containers[0].env,
+      template[0].containers[0].name,
+      template[0].containers[0].image,
+      template[0].containers[0].volume_mounts,
+    template[0].volumes]
   }
 }
 
 resource "google_project_iam_member" "CustomCloudRunDeveloper" {
-  depends_on = [ google_cloud_run_v2_job.run_job ]
+  depends_on = [google_cloud_run_v2_job.run_job]
   for_each   = { for member in var.members : member => member }
   project    = var.project
-  role       = "organizations/225850268505/roles/CustomCloudRunDeveloper"
+  role       = "organizations/<your org id>/roles/CustomCloudRunDeveloper"
   member     = each.value
 }
 
 resource "google_project_iam_member" "CloudSchedulerAdmin" {
-  depends_on = [ google_cloud_run_v2_job.run_job ]
+  depends_on = [google_cloud_run_v2_job.run_job]
   for_each   = { for member in var.members : member => member }
   project    = var.project
   role       = "roles/cloudscheduler.admin"

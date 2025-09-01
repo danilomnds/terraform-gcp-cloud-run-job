@@ -35,7 +35,29 @@ variable "template" {
           name       = string
           mount_path = string
         }))
-        working_dir = optional(string)
+        working_dir = optional(string)        
+        depends_on = optional(list(string))        
+        startup_probe = optional(object({
+          initial_delay_seconds = optional(number)
+          timeout_seconds = optional(number)
+          period_seconds = optional(number)
+          failure_threshold = optional(number)
+          tcp_socket = optional(object({
+            port = optional(number)
+          }))
+          http_get = optional(object({
+            path = optional(string)
+            port = optional(number)
+            http_headers = optional(object({
+              name = string
+              value = optional(string)
+            }))
+          }))
+          grpc = optional(object({
+            port = optional(string)
+            service = optional(string)
+          }))
+        }))
       }))
       volumes = optional(object({
         name = string
@@ -55,6 +77,8 @@ variable "template" {
         empty_dir = optional(object({
           medium     = optional(string)
           size_limit = optional(string)
+          # beta
+          #mount_options = optional(list(string))
         }))
         gcs = optional(object({
           bucket    = string
@@ -80,6 +104,10 @@ variable "template" {
         }))
       }))
       max_retries = optional(number)
+      node_selector = optional(object({
+        accelerator = string
+      }))
+      gpu_zonal_redundancy_disabled = optional(bool)
     })
   })
 }

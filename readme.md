@@ -1,7 +1,5 @@
 # Module - Cloud Run Job V2
-[![COE](https://img.shields.io/badge/Created%20By-CCoE-blue)]()
-[![HCL](https://img.shields.io/badge/language-HCL-blueviolet)](https://www.terraform.io/)
-[![GCP](https://img.shields.io/badge/provider-GCP-green)](https://registry.terraform.io/providers/hashicorp/google/latest)
+[![COE](https://img.shields.io/badge/Created%20By-CCoE-blue)]()[![HCL](https://img.shields.io/badge/language-HCL-blueviolet)](https://www.terraform.io/)[![GCP](https://img.shields.io/badge/provider-GCP-green)](https://registry.terraform.io/providers/hashicorp/google/latest)
 
 Module developed to standardize the creation of Cloud Run Jobs.
 
@@ -9,7 +7,15 @@ Module developed to standardize the creation of Cloud Run Jobs.
 
 | Module Version | Terraform Version | Google Version     |
 |----------------|-------------------| ------------------ |
-| v1.0.0         | v1.10.2           | 6.14.1             |
+| v1.0.0         | v1.10.2           | 6.14.1 - 6.48      |
+| v1.1.0         | v1.13.0           | 6.49.2             |
+
+## Release Notes
+
+| Module Version | Note | 
+|----------------|------|
+| v1.0.0 | Initial Version |
+| v1.1.0 | Provider update and add ignore changes|
 
 ## Specifying a version
 
@@ -19,7 +25,7 @@ Note: The `?ref=***` refers a tag on the git module repo.
 ## Default use case
 ```hcl
 module "cloudrunjobA" {    
-  source = "git::https://github.com/danilomnds/terraform-gcp-cloud-run-job?ref=v1.0.0"
+  source = "git::https://github.com/danilomnds/terraform-gcp-cloud-run-job?ref=v1.1.0"
   project = "project_id"
   name = "cloudrunjobA"
   location = "<southamerica-east1>"
@@ -44,13 +50,6 @@ module "cloudrunjobA" {
     }
   }
   labels = {
-    diretoria   = "ctio"
-    area        = "area"
-    system      = "system"    
-    environment = "fqa"
-    projinfra   = "0001"
-    dm          = "00000000"
-    provider    = "gcp"
     region      = "southamerica-east1"
   }
 }
@@ -62,11 +61,11 @@ output "id" {
 ## Default use case plus RBAC
 ```hcl
 module "cloudrunjobA" {    
-  source = "git::https://github.com/danilomnds/terraform-gcp-cloud-run-job?ref=v1.0.0"
+  source = "git::https://github.com/danilomnds/terraform-gcp-cloud-run-job?ref=v1.1.0"
   project = "project_id"
   name = "cloudrunjobA"
   location = "<southamerica-east1>"
-  members = ["group:GRP_GCP-SYSTEM-PRD@timbrasil.com.br"]
+  members = ["group:<your group>"]
   template = {
     template = {
       containers = {
@@ -87,14 +86,7 @@ module "cloudrunjobA" {
       }
     }
   }
-  labels = {
-    diretoria   = "ctio"
-    area        = "area"
-    system      = "system"    
-    environment = "fqa"
-    projinfra   = "0001"
-    dm          = "00000000"
-    provider    = "gcp"
+  labels = {    
     region      = "southamerica-east1"
   }
 }
