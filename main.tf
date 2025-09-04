@@ -4,7 +4,7 @@ resource "google_cloud_run_v2_job" "run_job" {
   #start_execution_token = var.start_execution_token
   #run_execution_token   = var.start_execution_token
   project             = var.project
-  deletion_protection = var.deletion_protection
+  deletion_protection = var.deletion_protection == null ? false : var.deletion_protection
   template {
     labels      = lookup(var.template, "labels", null)
     annotations = lookup(var.template, "annotations", null)
@@ -192,13 +192,13 @@ resource "google_cloud_run_v2_job" "run_job" {
   }
   lifecycle {
     ignore_changes = [
-      template[0].service_account,
-      template[0].containers[0].command,
-      template[0].containers[0].env,
-      template[0].containers[0].name,
-      template[0].containers[0].image,
-      template[0].containers[0].volume_mounts,
-    template[0].volumes]
+      template[0].template[0].service_account,
+      template[0].template[0].containers[0].command,
+      template[0].template[0].containers[0].env,
+      template[0].template[0].containers[0].name,
+      template[0].template[0].containers[0].image,
+      template[0].template[0].containers[0].volume_mounts,
+    template[0].template[0].volumes]
   }
 }
 
@@ -206,7 +206,7 @@ resource "google_project_iam_member" "CustomCloudRunDeveloper" {
   depends_on = [google_cloud_run_v2_job.run_job]
   for_each   = { for member in var.members : member => member }
   project    = var.project
-  role       = "organizations/<your org id>/roles/CustomCloudRunDeveloper"
+  role       = "organizations/225850268505/roles/CustomCloudRunDeveloper"
   member     = each.value
 }
 

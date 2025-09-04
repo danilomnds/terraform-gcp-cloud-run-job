@@ -111,7 +111,7 @@ output "id" {
 | start_execution_token | A unique string used as a suffix creating a new execution upon job create or update | `string` | n/a | No |
 | run_execution_token |  A unique string used as a suffix creating a new execution upon job create or update | `string` | n/a | No |
 | project | The ID of the project in which the resource belongs. If it is not provided, the provider project is used | `string` | n/a | No |
-| deletion_protection | Whether Terraform will be prevented from destroying the job | `bool` | `true` | No |
+| deletion_protection | Whether Terraform will be prevented from destroying the job | `bool` | `false` | No |
 | members | list of azure AD groups that will use the resource | `list(string)` | n/a | No |
 | scheduler_jobs_admin | Should Cloud Scheduler Admin be granted?  | `bool` | `false` | No |
 

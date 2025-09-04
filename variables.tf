@@ -167,7 +167,7 @@ variable "project" {
 
 variable "deletion_protection" {
   type    = bool
-  default = true
+  default = null
 }
 
 variable "members" {
