@@ -212,7 +212,8 @@ resource "google_project_iam_member" "CustomCloudRunDeveloper" {
 
 resource "google_project_iam_member" "CloudSchedulerAdmin" {
   depends_on = [google_cloud_run_v2_job.run_job]
-  for_each   = { for member in var.members : member => member }
+  for_each   = { for member in var.members : member => member
+  if var.scheduler_jobs_admin }
   project    = var.project
   role       = "roles/cloudscheduler.admin"
   member     = each.value
