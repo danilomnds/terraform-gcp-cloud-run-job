@@ -9,13 +9,15 @@ Module developed to standardize the creation of Cloud Run Jobs.
 |----------------|-------------------| ------------------ |
 | v1.0.0         | v1.10.2           | 6.14.1 - 6.48      |
 | v1.1.0         | v1.13.0           | 6.49.2             |
+| v1.2.0         | >= 1.15.5         | >= 7.35.0          |
 
 ## Release Notes
 
-| Module Version | Note | 
+| Module Version | Note |
 |----------------|------|
 | v1.0.0 | Initial Version |
-| v1.1.0 | Provider update and add ignore changes|
+| v1.1.0 | Provider update and add ignore changes |
+| v1.2.0 | Aligned with provider 7.x arguments: fixed container port field, added deletion_policy, enabled execution tokens, and added missing nested fields (`sub_path`, `mount_options`) |
 
 ## Specifying a version
 
@@ -24,32 +26,35 @@ Note: The `?ref=***` refers a tag on the git module repo.
 
 ## Default use case
 ```hcl
-module "cloudrunjobA" {    
-  source = "git::https://github.com/danilomnds/terraform-gcp-cloud-run-job?ref=v1.1.0"
-  project = "project_id"
-  name = "cloudrunjobA"
-  location = "<southamerica-east1>"
+module "cloudrunjobA" {
+  source   = "git::https://github.com/danilomnds/terraform-gcp-cloud-run-job?ref=v1.2.0"
+  project  = "project_id"
+  name     = "cloudrunjobA"
+  location = "southamerica-east1"
   template = {
     template = {
       containers = {
         image = "us-docker.pkg.dev/cloudrun/container/job"
       }
       resources = {
-          limits = {
-            cpu    = "1"
-            memory = "512Mi"
-          }
+        limits = {
+          cpu    = "1"
+          memory = "512Mi"
+        }
       }
       vpc_access = {
         network_interfaces = {
-          network = "default"
+          network    = "default"
           subnetwork = "default"
-          tags = ["tag1", "tag2", "tag3"]
+          tags       = ["tag1", "tag2", "tag3"]
         }
       }
     }
   }
   labels = {
+    system      = "system"
+    environment = "fqa"
+    provider    = "gcp"
     region      = "southamerica-east1"
   }
 }
@@ -60,33 +65,36 @@ output "id" {
 
 ## Default use case plus RBAC
 ```hcl
-module "cloudrunjobA" {    
-  source = "git::https://github.com/danilomnds/terraform-gcp-cloud-run-job?ref=v1.1.0"
-  project = "project_id"
-  name = "cloudrunjobA"
-  location = "<southamerica-east1>"
-  members = ["group:<your group>"]
+module "cloudrunjobA" {
+  source   = "git::https://github.com/danilomnds/terraform-gcp-cloud-run-job?ref=v1.2.0"
+  project  = "project_id"
+  name     = "cloudrunjobA"
+  location = "southamerica-east1"
+  members  = ["group:platform-team@example.com"]
   template = {
     template = {
       containers = {
         image = "us-docker.pkg.dev/cloudrun/container/job"
       }
       resources = {
-          limits = {
-            cpu    = "1"
-            memory = "512Mi"
-          }
+        limits = {
+          cpu    = "1"
+          memory = "512Mi"
+        }
       }
       vpc_access = {
         network_interfaces = {
-          network = "default"
+          network    = "default"
           subnetwork = "default"
-          tags = ["tag1", "tag2", "tag3"]
+          tags       = ["tag1", "tag2", "tag3"]
         }
       }
     }
   }
-  labels = {    
+  labels = {
+    system      = "system"
+    environment = "prd"
+    provider    = "gcp"
     region      = "southamerica-east1"
   }
 }
@@ -109,11 +117,12 @@ output "id" {
 | launch_stage | The launch stage as defined by Google Cloud Platform Launch Stages. Cloud Run supports ALPHA, BETA, and GA | `string` | n/a | No |
 | binary_authorization | Settings for the Binary Authorization feature. See the documentation [here](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_job) | `object({})` | n/a | No |
 | start_execution_token | A unique string used as a suffix creating a new execution upon job create or update | `string` | n/a | No |
-| run_execution_token |  A unique string used as a suffix creating a new execution upon job create or update | `string` | n/a | No |
+| run_execution_token | A unique string used as a suffix creating a new execution upon job create or update | `string` | n/a | No |
 | project | The ID of the project in which the resource belongs. If it is not provided, the provider project is used | `string` | n/a | No |
-| deletion_protection | Whether Terraform will be prevented from destroying the job | `bool` | `false` | No |
-| members | list of azure AD groups that will use the resource | `list(string)` | n/a | No |
-| scheduler_jobs_admin | Should Cloud Scheduler Admin be granted?  | `bool` | `false` | No |
+| deletion_policy | Terraform deletion behavior: `DELETE`, `ABANDON`, or `PREVENT` | `string` | n/a | No |
+| deletion_protection | Whether Terraform will be prevented from destroying the job | `bool` | `null` | No |
+| members | List of IAM members that will use the resource | `list(string)` | n/a | No |
+| scheduler_jobs_admin | Should Cloud Scheduler Admin be granted? | `bool` | `false` | No |
 
 # Object variables for blocks
 
@@ -123,8 +132,8 @@ Please check the documentation [here](https://registry.terraform.io/providers/ha
 
 | Name | Description |
 |------|-------------|
-| id | cloud run job id|
+| id | Cloud Run Job ID |
 
 ## Documentation
-Cloud Run Job: <br>
+Cloud Run Job:
 [https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_job](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_job)

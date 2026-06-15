@@ -34,14 +34,15 @@ variable "template" {
         volume_mounts = optional(object({
           name       = string
           mount_path = string
+          sub_path   = optional(string)
         }))
-        working_dir = optional(string)        
-        depends_on = optional(list(string))        
+        working_dir = optional(string)
+        depends_on  = optional(list(string))
         startup_probe = optional(object({
           initial_delay_seconds = optional(number)
-          timeout_seconds = optional(number)
-          period_seconds = optional(number)
-          failure_threshold = optional(number)
+          timeout_seconds       = optional(number)
+          period_seconds        = optional(number)
+          failure_threshold     = optional(number)
           tcp_socket = optional(object({
             port = optional(number)
           }))
@@ -49,12 +50,12 @@ variable "template" {
             path = optional(string)
             port = optional(number)
             http_headers = optional(object({
-              name = string
+              name  = string
               value = optional(string)
             }))
           }))
           grpc = optional(object({
-            port = optional(string)
+            port    = optional(number)
             service = optional(string)
           }))
         }))
@@ -63,11 +64,11 @@ variable "template" {
         name = string
         secret = optional(object({
           secret       = string
-          default_mode = optional(string)
+          default_mode = optional(number)
           items = optional(object({
             path    = string
             version = string
-            mode    = string
+            mode    = optional(number)
           }))
         }))
         cloud_sql_instance = optional(object({
@@ -81,8 +82,9 @@ variable "template" {
           #mount_options = optional(list(string))
         }))
         gcs = optional(object({
-          bucket    = string
-          read_only = optional(bool)
+          bucket        = string
+          read_only     = optional(bool)
+          mount_options = optional(list(string))
         }))
         nfs = optional(object({
           server    = string
@@ -100,7 +102,7 @@ variable "template" {
         network_interfaces = optional(object({
           network    = optional(string)
           subnetwork = optional(string)
-          tags       = list(string)
+          tags       = optional(list(string))
         }))
       }))
       max_retries = optional(number)
@@ -167,6 +169,11 @@ variable "project" {
 
 variable "deletion_protection" {
   type    = bool
+  default = null
+}
+
+variable "deletion_policy" {
+  type    = string
   default = null
 }
 

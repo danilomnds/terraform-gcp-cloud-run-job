@@ -1,10 +1,11 @@
 resource "google_cloud_run_v2_job" "run_job" {
   name = var.name
-  # These two parameters are in beta state. The will be added in a future update. 
-  #start_execution_token = var.start_execution_token
-  #run_execution_token   = var.start_execution_token
+  # Beta in provider docs; kept commented out by design.
+  # start_execution_token = var.start_execution_token
+  # run_execution_token   = var.run_execution_token
   project             = var.project
-  deletion_protection = var.deletion_protection == null ? false : var.deletion_protection
+  deletion_policy     = var.deletion_policy
+  deletion_protection = var.deletion_protection
   template {
     labels      = lookup(var.template, "labels", null)
     annotations = lookup(var.template, "annotations", null)
@@ -47,7 +48,7 @@ resource "google_cloud_run_v2_job" "run_job" {
             for_each = containers.value.ports != null ? [containers.value.ports] : []
             content {
               name           = lookup(ports.value, "name", null)
-              container_port = lookup(ports.value, "containercontainer_port", null)
+              container_port = lookup(ports.value, "container_port", null)
             }
           }
           dynamic "volume_mounts" {
@@ -55,43 +56,44 @@ resource "google_cloud_run_v2_job" "run_job" {
             content {
               name       = volume_mounts.value.name
               mount_path = volume_mounts.value.mount_path
+              sub_path   = lookup(volume_mounts.value, "sub_path", null)
             }
           }
           working_dir = lookup(containers.value, "working_dir", null)
-          depends_on = lookup(containers.value, "depends_on", null)
+          depends_on  = lookup(containers.value, "depends_on", null)
           dynamic "startup_probe" {
             for_each = containers.value.startup_probe != null ? [containers.value.startup_probe] : []
             content {
-              initial_delay_seconds       = lookup(startup_probe.value, "initial_delay_seconds", null)
+              initial_delay_seconds = lookup(startup_probe.value, "initial_delay_seconds", null)
               timeout_seconds       = lookup(startup_probe.value, "timeout_seconds", null)
-              period_seconds       = lookup(startup_probe.value, "period_seconds", null)
-              failure_threshold       = lookup(startup_probe.value, "failure_threshold", null)
+              period_seconds        = lookup(startup_probe.value, "period_seconds", null)
+              failure_threshold     = lookup(startup_probe.value, "failure_threshold", null)
               dynamic "tcp_socket" {
                 for_each = startup_probe.value.tcp_socket != null ? [startup_probe.value.tcp_socket] : []
                 content {
-                   port =  lookup(tcp_socket.value, "port", null)
-                }                
+                  port = lookup(tcp_socket.value, "port", null)
+                }
               }
               dynamic "http_get" {
                 for_each = startup_probe.value.http_get != null ? [startup_probe.value.http_get] : []
                 content {
-                   path =  lookup(http_get.value, "path", null)
-                   port =  lookup(http_get.value, "port", null)
-                   dynamic "http_headers" {
+                  path = lookup(http_get.value, "path", null)
+                  port = lookup(http_get.value, "port", null)
+                  dynamic "http_headers" {
                     for_each = http_get.value.http_headers != null ? [http_get.value.http_headers] : []
                     content {
-                      name = http_headers.value.name
-                      value =  lookup(http_headers.value, "value", null)
-                    }                     
-                   }
-                }                
+                      name  = http_headers.value.name
+                      value = lookup(http_headers.value, "value", null)
+                    }
+                  }
+                }
               }
               dynamic "grpc" {
                 for_each = startup_probe.value.grpc != null ? [startup_probe.value.grpc] : []
                 content {
-                   port =  lookup(grpc.value, "port", null)
-                   service =  lookup(grpc.value, "service", null)
-                }                
+                  port    = lookup(grpc.value, "port", null)
+                  service = lookup(grpc.value, "service", null)
+                }
               }
             }
           }
@@ -126,15 +128,16 @@ resource "google_cloud_run_v2_job" "run_job" {
             for_each = volumes.value.empty_dir != null ? [volumes.value.empty_dir] : []
             content {
               medium     = lookup(empty_dir.value, "medium", null)
-              size_limit = lookup(empty_dir.value, "size_limit", null)              
+              size_limit = lookup(empty_dir.value, "size_limit", null)
               #mount_options = lookup(empty_dir.value, "mount_options", null)
             }
           }
           dynamic "gcs" {
             for_each = volumes.value.gcs != null ? [volumes.value.gcs] : []
             content {
-              bucket    = gcs.value.bucket
-              read_only = lookup(gcs.value, "read_only", null)
+              bucket        = gcs.value.bucket
+              read_only     = lookup(gcs.value, "read_only", null)
+              mount_options = lookup(gcs.value, "mount_options", null)
             }
           }
           dynamic "nfs" {
@@ -171,9 +174,9 @@ resource "google_cloud_run_v2_job" "run_job" {
         for_each = var.template.template.node_selector != null ? [var.template.template.node_selector] : []
         content {
           accelerator = node_selector.value.accelerator
-        }        
+        }
       }
-      gpu_zonal_redundancy_disabled = lookup(var.template.template, "gpu_zonal_redundancy_disabled", null)      
+      gpu_zonal_redundancy_disabled = lookup(var.template.template, "gpu_zonal_redundancy_disabled", null)
     }
   }
   location       = var.location
@@ -198,23 +201,30 @@ resource "google_cloud_run_v2_job" "run_job" {
       template[0].template[0].containers[0].name,
       template[0].template[0].containers[0].image,
       template[0].template[0].containers[0].volume_mounts,
-    template[0].template[0].volumes]
+      template[0].template[0].volumes
+    ]
   }
 }
 
-resource "google_project_iam_member" "CustomCloudRunDeveloper" {
+# CustomCloudRunDeveloper already includes Cloud Run invoker capabilities,
+# so a separate roles/run.invoker binding is not required here.
+resource "google_cloud_run_v2_job_iam_member" "CustomCloudRunDeveloper" {
   depends_on = [google_cloud_run_v2_job.run_job]
   for_each   = { for member in var.members : member => member }
   project    = var.project
+  location   = google_cloud_run_v2_job.run_job.location
+  name       = google_cloud_run_v2_job.run_job.name
   role       = "organizations/225850268505/roles/CustomCloudRunDeveloper"
   member     = each.value
 }
 
+# Cloud Scheduler Admin is a scheduler control-plane role and can only be granted
+# at project/folder/organization scope, not at Cloud Run Job IAM scope.
 resource "google_project_iam_member" "CloudSchedulerAdmin" {
   depends_on = [google_cloud_run_v2_job.run_job]
-  for_each   = { for member in var.members : member => member
+  for_each = { for member in var.members : member => member
   if var.scheduler_jobs_admin }
-  project    = var.project
-  role       = "roles/cloudscheduler.admin"
-  member     = each.value
+  project = var.project
+  role    = "roles/cloudscheduler.admin"
+  member  = each.value
 }
